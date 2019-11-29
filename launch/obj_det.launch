@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="inter_iit_uav_fleet" type="object_detect" name="object_detect" output="screen" required="true">
+        <rosparam file="$(find inter_iit_uav_fleet)/cfg/params.yaml"/>
+        <!-- Subscribed Topics -->
+
+        <!-- Published Topics -->
+    </node>
+</launch>
