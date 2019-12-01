@@ -27,7 +27,7 @@ void imageCallback(const sensor_msgs::Image msg)
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "object_detect");
-    ros::NodeHandle nh_private = ros::NodeHandle();
+    ros::NodeHandle nh_private = ros::NodeHandle("~");
 
     int i, j;
     int h_low, s_low, v_low, h_high, s_high, v_high;
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 
         for (i = 0; i < list_contours.size(); i++)
         {
-            if (cv::contourArea(list_contours.at(i)) > 0.0025 * src.rows * src.cols)
+            if (cv::contourArea(list_contours.at(i)) > 0.00025 * src.rows * src.cols)
             {
                 list_corners.clear();
                 corners.clear();

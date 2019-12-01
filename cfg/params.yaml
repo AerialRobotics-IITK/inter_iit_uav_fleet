@@ -1,7 +1,7 @@
-h_low : 40
+h_low : 70
 s_low : 70
 v_low : 0
 
 h_high : 90
-s_high : 110
+s_high : 255
 v_high : 255
