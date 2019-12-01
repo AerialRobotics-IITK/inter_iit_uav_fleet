@@ -3,7 +3,7 @@
     <node pkg="inter_iit_uav_fleet" type="object_detect" name="object_detect" output="screen" required="true">
         <rosparam file="$(find inter_iit_uav_fleet)/cfg/params.yaml"/>
         <!-- Subscribed Topics -->
-
+        <remap from="image" to="/usb_cam/image_raw"/>
         <!-- Published Topics -->
     </node>
 </launch>
