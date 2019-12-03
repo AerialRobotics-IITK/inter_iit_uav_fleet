@@ -1,9 +1,22 @@
-HMin : 40
-SMin : 10
-VMin : 80
-
-HMax : 50
-SMax : 255
-VMax : 255
-
 #values for green.bag
+hsvMin:  
+  HMin : 40
+  SMin : 10
+  VMin : 80
+
+hsvMax: 
+  HMax : 50
+  SMax : 255
+  VMax : 255
+
+verbose: true
+loc_error: 0.2
+
+height:
+  hover: 5
+  land : 1
+  step : 0.4
+
+delay:
+  hover: 5
+  transition: 2

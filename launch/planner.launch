@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <include file="$(find inter_iit_uav_fleet)/launch/detect.launch" />
+
+    <rosparam file="$(find inter_iit_uav_fleet)/cfg/params.yaml"/>
+    <node pkg="inter_iit_uav_fleet" type="planner" name="planner" output="screen" required="true"/>>
+</launch>

@@ -11,8 +11,10 @@ set(CMAKE_BUILD_TYPE Release)
 find_package(OpenCV 3 REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-cs_add_executable(object_detect src/object_detect.cpp)
-target_link_libraries(object_detect ${OpenCV_LIBRARIES})
+cs_add_executable(detector src/detect.cpp)
+target_link_libraries(detector ${OpenCV_LIBRARIES})
+
+cs_add_executable(planner src/planner.cpp)
 
 cs_install()
 cs_export()
