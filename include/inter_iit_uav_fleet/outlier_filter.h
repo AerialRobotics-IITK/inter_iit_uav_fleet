@@ -1,9 +1,8 @@
 #ifndef INTER_IIT_UAV_FLEET_OUTLIER_FILTER_H
 #define INTER_IIT_UAV_FLEET_OUTLIER_FILTER_H
 
-#include <ros/ros.h>
 #include <opencv2/opencv.hpp>
-#include <opencv-3.3.1-dev/opencv2/opencv.hpp>
+// #include <opencv-3.3.1-dev/opencv2/opencv.hpp>
 
 double crossProduct(cv::Point, cv::Point, cv::Point);
 double baseLength(cv::Point, cv::Point);

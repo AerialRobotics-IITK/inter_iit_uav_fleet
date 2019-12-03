@@ -1,7 +1,9 @@
-h_low : 70
-s_low : 70
-v_low : 0
+HMin : 40
+SMin : 10
+VMin : 80
 
-h_high : 90
-s_high : 255
-v_high : 255
+HMax : 50
+SMax : 255
+VMax : 255
+
+#values for green.bag
