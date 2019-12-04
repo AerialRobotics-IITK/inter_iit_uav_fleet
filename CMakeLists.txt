@@ -15,6 +15,7 @@ cs_add_executable(detector src/detect.cpp)
 target_link_libraries(detector ${OpenCV_LIBRARIES})
 
 cs_add_executable(planner src/planner.cpp)
+cs_add_executable(router src/router.cpp)
 
 cs_install()
 cs_export()

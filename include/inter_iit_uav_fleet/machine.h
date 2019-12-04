@@ -6,7 +6,6 @@
 #include <std_msgs/String.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/WaypointPull.h>
-#include <std_srvs/Empty.h>
 
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/back/mpl_graph_fsm_check.hpp>
@@ -17,8 +16,6 @@
 
 #define echo(X) std::cout << X << std::endl
 #define sq(X) (X)*(X)
-
-int numObjects = 0;
 
 namespace state_machine
 {
@@ -35,6 +32,13 @@ namespace state_machine
     // state variables
     bool ContMission = true;
     bool AtLZ = false;
+
+    bool terminator(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+    {
+        ContMission = req.data;
+        res.success = (ContMission == req.data);
+        return true;
+    }
 
     // state machine object
     struct fsm :  public msm::front::state_machine_def <fsm>
@@ -79,12 +83,13 @@ namespace state_machine
         ros::Subscriber mav_pose_sub_ = nh.subscribe("odometry", 10, mav_pose_cb_);
         ros::Subscriber mission_wp_sub = nh.subscribe("mission/reached", 10, wp_reached_cb_);
         ros::Subscriber state_sub_ = nh.subscribe("state",1, state_cb_);
-        ros::Subscriber obj_sub_ = nh.subscribe("object_poses", 10, obj_cb_);
 
         // service clients
         ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("set_mode");
         ros::ServiceClient mission_client = nh.serviceClient<mavros_msgs::WaypointPull>("mission/pull");
         ros::ServiceClient detector_client = nh.serviceClient<inter_iit_uav_fleet::signal>("detector/terminate");
+
+        ros::ServiceServer terminate_server = nh.advertiseService("stop", terminator);
 
         // state transition functions
 
@@ -149,8 +154,6 @@ namespace state_machine
             mission_set_mode.request.custom_mode = "AUTO.MISSION";
             bool mode_set_= false;
 
-            std_srvs::Empty pose_hold;
-
             if(verbose)   echo("  Changing mode to Mission");                                                           // Add state check
             while (!mode_set_){
                 ros::spinOnce();
@@ -162,11 +165,12 @@ namespace state_machine
             }
             if(verbose)   echo("  Changed mode to Mission");
 
-            while(numObjects != totalObjects || prev_wp.wp_seq == num_wp)
+            while(!ContMission || prev_wp.wp_seq != num_wp)
             {
                 ros::spinOnce();
                 loopRate.sleep();
             }
+            ContMission = false;
 
             while (mode_set_){
                 ros::spinOnce();
