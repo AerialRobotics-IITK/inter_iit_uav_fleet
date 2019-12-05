@@ -37,9 +37,6 @@ nav_msgs::Odometry odom;
 Eigen::Matrix3d camMatrix, invCamMatrix, camToQuad, quadToCam;
 Eigen::Vector3d tCam;
 
-//GPS initial coordinates
-double lat0,long0;
-
 // hsv range variables
 int HMax=90, HMin=70, SMax=255, SMin=0, VMax=255, VMin=0;
 

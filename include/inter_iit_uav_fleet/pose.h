@@ -44,6 +44,6 @@ void findPose(const cv::Point& center, inter_iit_uav_fleet::Pose& box_pose)
 
     Eigen::Vector3d globCoord = quadToGlob2*quadCoord;
     GeographicLib::AzimuthalEquidistant obj;
-    obj.Reverse(lat0,long0,globCoord[0],globCoord[1],box_pose.position.x,box_pose.position.y);
+    obj.Reverse(quad_GPS.latitude,quad_GPS.longitude,globCoord[0],globCoord[1],box_pose.position.x,box_pose.position.y);
     box_pose.position.z = 0;
 }
