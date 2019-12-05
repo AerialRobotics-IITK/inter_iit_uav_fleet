@@ -1,7 +1,9 @@
 #include <inter_iit_uav_fleet/callbacks.h>
 #include <fstream>
+#include <future>
 
 #include <std_msgs/String.h>
+#include <std_msgs/Int16.h>
 #include <inter_iit_uav_fleet/RouterData.h>
 
 #define echo(x) std::cout << x << std::endl
@@ -24,42 +26,50 @@ struct locData{
     // bool publish;
 };
 
-int ids[numQuads][numObjects];
+int entries[numQuads];
 struct locData objects[numObjects];
-int numEntries = 0;
+int lastEntry = -1;
 
+void n1Callback(const std_msgs::Int16& msg){entries[0] = msg.data;}
+void n2Callback(const std_msgs::Int16& msg){entries[1] = msg.data;}
 void r1Callback(const inter_iit_uav_fleet::RouterData& msg){ routerData[0] = msg; }
 void r2Callback(const inter_iit_uav_fleet::RouterData& msg){ routerData[1] = msg; }
 
 void updateTable()
 {
+    // echo(obj_data.imageID);
     for(int i = 0; i < obj_data.object_poses.size(); i++)
     {
         bool accept = false;
-        for(int j = 0; j < numEntries; j++)
+        // if(verbose) echo("Processing detector values");
+        for(int j = 0; j < lastEntry; j++)
         {
             if(sq(objects[j].lat - obj_data.object_poses.at(i).position.x) + \
                 sq(objects[j].lon - obj_data.object_poses.at(i).position.y) < loc_error)
             { accept = false; break; }
+            if(verbose) echo("Rejected");
         }
 
-        if(accept)
+        if(accept || lastEntry == -1)
         {
-            if(numEntries > 4) break;
-            objects[numEntries].lat = obj_data.object_poses.at(i).position.x;
-            objects[numEntries].lon = obj_data.object_poses.at(i).position.y;
-            numEntries++;
+            if(lastEntry == 3) break;
+            lastEntry++;
+            objects[lastEntry].lat = obj_data.object_poses.at(i).position.x;
+            objects[lastEntry].lon = obj_data.object_poses.at(i).position.y;
+            if(verbose) echo("Accepted(D): " << objects[lastEntry].lat << " " << " " << objects[lastEntry].lon << "at pos: " << lastEntry);
         }
     }
 
     for(int i = 0; i < numQuads - 1; i++)
     {
-        if(numEntries > 4) break;
-        if(numEntries != routerData[i].id)
+        // if(verbose) echo("Processing router values");
+        if(lastEntry == 3) break;
+        if(lastEntry < routerData[i].id && entries[i] != -1)
         {
-            objects[numEntries].lat = routerData[i].position.x;
-            objects[numEntries].lon = routerData[i].position.y;
-            numEntries++;
+            lastEntry++;
+            objects[lastEntry].lat = routerData[i].position.x;
+            objects[lastEntry].lon = routerData[i].position.y;
+            if(verbose) echo("Accepted(R): " << objects[lastEntry].lat << " " << " " << objects[lastEntry].lon << "at pos: " << lastEntry);
         }
     }
 }
@@ -67,22 +77,37 @@ void updateTable()
 void updateRouters(ros::Publisher *pub)
 {
     inter_iit_uav_fleet::RouterData msg;
-    if(routerData[0].id != numEntries || routerData[1].id != numEntries){
-        msg.id = numEntries - 1;
-        msg.position.x = objects[numEntries-1].lat;
-        msg.position.y = objects[numEntries-1].lon; 
-        msg.position.z = 0;
+
+    if(lastEntry > entries[0] || lastEntry > entries[1])
+    {
+        int i = lastEntry - entries[0], j = lastEntry - entries[1];
+        for(int k = 0; k < i; k++)
+        {
+            msg.id = lastEntry - k;
+            msg.position.x = objects[lastEntry - k].lat;
+            msg.position.y = objects[lastEntry - k].lon; 
+            msg.position.z = 0;
+            pub->publish(msg);
+            if(verbose) echo("Published: " << objects[lastEntry-k].lat << " " << " " << objects[lastEntry-k].lon << "from pos: " << lastEntry-k);
+        }
+        for(int k = 0; k < j; k++)
+        {
+            msg.id = lastEntry - k;
+            msg.position.x = objects[lastEntry - k].lat;
+            msg.position.y = objects[lastEntry - k].lon; 
+            msg.position.z = 0;
+            pub->publish(msg);
+            if(verbose) echo("Published: " << objects[lastEntry-k].lat << " " << " " << objects[lastEntry-k].lon << "from pos: " << lastEntry-k);
+        }
     }
-    
-    pub->publish(msg);
 }
 
 void saveData()
 {
     std::ofstream file;
     file.open(gpsPath);
-    file << std::to_string(numEntries) << "\n";
-    for (int i = 0; i < numEntries; i++) file << std::to_string(objects[i].lat) + \
+    file << std::to_string(lastEntry) << "\n";
+    for (int i = 0; i < lastEntry; i++) file << std::to_string(objects[i].lat) + \
      " " + std::to_string(objects[i].lon) + "\n";
     file.close();
     return;
@@ -107,26 +132,30 @@ int main(int argc, char** argv)
     ros::NodeHandle routers[numQuads] = {"/" + names[id-1], "/" + names[(id)%numQuads], "/" + names[(id+1)%numQuads]};
     
     ros::Subscriber objSub = routers[0].subscribe("objects", 10, obj_cb_);
-    // ros::Subscriber stateSub = routers[0].subscribe("curr_state", 10, state_cb_);
-    // ros::Subscriber utmSub = routers[0].subscribe("utm_pose", 10, utm_pose_cb_);
-    // ros::Subscriber odomSub = routers[0].subscribe("odometry", 10, mav_pose_cb_);
-    // ros::Subscriber gpsSub = routers[0].subscribe("gps", 1, gpsCallback);
-
-    ros::Subscriber subs[numQuads - 1] = {routers[1].subscribe("router/data", 10, r1Callback), routers[2].subscribe("router/data", 10, r2Callback)};
+    ros::Subscriber dsubs[numQuads - 1] = {routers[1].subscribe("router/data", 10, r1Callback), routers[2].subscribe("router/data", 10, r2Callback)};
+    ros::Subscriber nsubs[numQuads - 1] = {routers[1].subscribe("router/num", 10, n1Callback), routers[2].subscribe("router/num", 10, n2Callback)};
 
     ros::Publisher routerPub = ph.advertise<inter_iit_uav_fleet::RouterData>("data", 10);
-    // ros::Publisher taskPub = routers[0].advertise<inter_iit_uav_fleet::TaskInfo>("task", 10);
+    ros::Publisher numberPub = ph.advertise<std_msgs::Int16>("num", 10);
 
     ros::ServiceClient terminator = nh.serviceClient<std_srvs::SetBool>("planner/stop");
 
+    std_msgs::Int16 msg;
+    entries[0] = entries[1] = -1;
+    
     while(ros::ok())
     {
         ros::spinOnce();
+        msg.data = lastEntry;
+        numberPub.publish(msg);
         updateTable();
         updateRouters(&routerPub);
-        if(numEntries == numObjects) break;
+        if(lastEntry + 1 == numObjects - 1) break;
         loopRate.sleep();
     }
+
+    std_srvs::SetBool srv; srv.request.data = false;
+    while(!srv.response.success) terminator.call(srv);
     saveData();
 
     return 0;
