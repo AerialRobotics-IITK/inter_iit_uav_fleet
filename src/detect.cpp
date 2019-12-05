@@ -13,6 +13,9 @@ int main(int argc, char** argv)
     nh.getParam("hsvMax/HMax", HMax);
     nh.getParam("hsvMax/SMax", SMax);
     nh.getParam("hsvMax/VMax", VMax);
+    nh.getParam("initial_latitude", lat0);
+    nh.getParam("initial_longitude", long0);
+
 
     std::vector<double> tempList;
     cv::Mat intrinsic = cv::Mat_<double>(3,3);
