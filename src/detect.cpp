@@ -1,6 +1,6 @@
-
 #include <inter_iit_uav_fleet/callbacks.h>
 #include <inter_iit_uav_fleet/outlier_filter.h>
+#include <inter_iit_uav_fleet/pose.h>
 
 int main(int argc, char** argv)
 {
@@ -14,6 +14,48 @@ int main(int argc, char** argv)
     nh.getParam("hsvMax/SMax", SMax);
     nh.getParam("hsvMax/VMax", VMax);
 
+    std::vector<double> tempList;
+    cv::Mat intrinsic = cv::Mat_<double>(3,3);
+    int tempIdx=0;
+    
+
+    nh.getParam("camera_matrix/data", tempList);
+    tempIdx=0;
+    for(int i=0; i<3; i++)
+    {
+        for(int j=0; j<3; j++)
+        {
+            intrinsic.at<double>(i,j) = tempList[tempIdx++];
+        }
+    }
+
+    nh.getParam("camera/translation", tempList);
+    for (int i = 0; i < 3; i++)
+    {
+        tCam(i) = tempList[i];
+    }
+
+    nh.getParam("camera/rotation", tempList);
+    tempIdx = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            quadToCam(i,j) = tempList[tempIdx++];
+        }
+    }
+    
+    for(int i=0; i<3; i++)
+    {
+        for(int j=0; j<3; j++)
+        {
+            camMatrix(i,j) = intrinsic.at<double>(i,j);
+        }
+    }
+
+    invCamMatrix = camMatrix.inverse();
+    camToQuad = quadToCam.inverse();
+
     cv::Mat src_hsv, thresholded_hsv, thresholded_hsv1, drawing, drawing1;
 
     std::vector<std::vector<cv::Point>> list_contours;
@@ -22,6 +64,9 @@ int main(int argc, char** argv)
     std::vector<cv::Point> corners;
 
     ros::Subscriber image_sub = ph.subscribe<sensor_msgs::Image>("image", 30, imageCallback);
+    ros::Subscriber GPS_sub = ph.subscribe<sensor_msgs::NavSatFix>("GPS", 30, GPS_cb_);
+    ros::Subscriber compass_sub = ph.subscribe<std_msgs::Float64>("compass", 30, compass_cb_);
+    ros::Subscriber odom_sub = ph.subscribe<nav_msgs::Odometry>("odom", 30, odom_cb_);
 
     ros::Publisher thresh_imgPub = ph.advertise<sensor_msgs::Image>("thresh_image", 1);
     ros::Publisher contour_imgPub = ph.advertise<sensor_msgs::Image>("contours", 1);

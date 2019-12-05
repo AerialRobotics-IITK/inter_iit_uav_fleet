@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
+#include <eigen3/Eigen/Eigen>
 
 #include <inter_iit_uav_fleet/reconfigConfig.h>
 #include <dynamic_reconfigure/server.h>
@@ -10,7 +11,8 @@
 #include <mavros_msgs/WaypointReached.h>
 #include <mavros_msgs/State.h>
 #include <sensor_msgs/NavSatFix.h>
-#include <std_srvs/SetBool.h>
+#include <std_msgs/Float64.h>
+#include <nav_msgs/Odometry.h>
 
 #include <inter_iit_uav_fleet/UTMPose.h>
 #include <inter_iit_uav_fleet/Poses.h>
@@ -27,7 +29,13 @@ inter_iit_uav_fleet::Poses obj_data, helipad;
 mavros_msgs::WaypointReached prev_wp;
 mavros_msgs::State mav_mode_;
 geometry_msgs::PointStamped home_msg_;
-sensor_msgs::NavSatFix gps;
+sensor_msgs::NavSatFix quad_GPS;
+std_msgs::Float64 heading;
+nav_msgs::Odometry odom;
+
+//camera parameters
+Eigen::Matrix3d camMatrix, invCamMatrix, camToQuad, quadToCam;
+Eigen::Vector3d tCam;
 
 // hsv range variables
 int HMax=90, HMin=70, SMax=255, SMin=0, VMax=255, VMin=0;
@@ -100,7 +108,9 @@ void obj_cb_(const inter_iit_uav_fleet::Poses &msg){obj_data = msg;}
 void utm_pose_cb_(const inter_iit_uav_fleet::UTMPose &msg){utm_pose_ = msg;}
 void wp_reached_cb_(const mavros_msgs::WaypointReached &msg){prev_wp = msg;}
 void state_cb_(const mavros_msgs::State &msg){mav_mode_ = msg;}
-void gpsCallback(const sensor_msgs::NavSatFix& msg){gps = msg;}
+void GPS_cb_(const sensor_msgs::NavSatFix msg){quad_GPS = msg;}
+void compass_cb_(const std_msgs::Float64 msg){heading = msg;}
+void odom_cb_(const nav_msgs::Odometry msg){odom = msg;}
 
 void cfgCallback(inter_iit_uav_fleet::reconfigConfig &config, uint32_t level){
     switch(level){
