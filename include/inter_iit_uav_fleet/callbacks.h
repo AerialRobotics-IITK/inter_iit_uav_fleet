@@ -108,15 +108,15 @@ void obj_cb_(const inter_iit_uav_fleet::Poses &msg){obj_data = msg;}
 void utm_pose_cb_(const inter_iit_uav_fleet::UTMPose &msg){utm_pose_ = msg;}
 void wp_reached_cb_(const mavros_msgs::WaypointReached &msg){prev_wp = msg;}
 void state_cb_(const mavros_msgs::State &msg){mav_mode_ = msg;}
-void compass_cb_(const std_msgs::Float64 msg){heading = msg;}
-void odom_cb_(const nav_msgs::Odometry msg){odom = msg;}
-void GPS_cb_(const sensor_msgs::NavSatFix msg){
+void compass_cb_(const std_msgs::Float64 msg){
     static int count=0;
-    if (count <=30){
-        quad_GPS = msg;
+    if (count <=10){
+        heading = msg;
         count++;
     }
 }
+void odom_cb_(const nav_msgs::Odometry msg){odom = msg;}
+void GPS_cb_(const sensor_msgs::NavSatFix msg){quad_GPS = msg;}
 
 void cfgCallback(inter_iit_uav_fleet::reconfigConfig &config, uint32_t level){
     switch(level){

@@ -102,7 +102,8 @@ int main(int argc, char** argv)
 
             for (int i = 0; i < list_contours.size(); i++)
             {
-                if (cv::contourArea(list_contours.at(i)) > 0.00025 * src.rows * src.cols)
+                inter_iit_uav_fleet::Pose box_pose;
+                if ((box_pose.area=cv::contourArea(list_contours.at(i))) > 0.00025 * src.rows * src.cols)
                 {
                     list_corners.clear();
                     corners.clear();
@@ -115,8 +116,6 @@ int main(int argc, char** argv)
                     if (!list_corners.at(0).empty() && list_corners.at(0).size() == 4){
                         cv::drawContours(src, list_corners, 0, cv::Scalar(255, 0, 0));
                         cv::Point center((list_corners.at(0).at(0).x+list_corners.at(0).at(1).x+list_corners.at(0).at(2).x+list_corners.at(0).at(3).x)/4,(list_corners.at(0).at(0).y+list_corners.at(0).at(1).y+list_corners.at(0).at(2).y+list_corners.at(0).at(3).y)/4);
-                        inter_iit_uav_fleet::Pose box_pose;
-                        box_pose.area = cv::contourArea(list_contours.at(i));
                         box_pose.boxID = i;
                         findPose(center,box_pose);
                     }
