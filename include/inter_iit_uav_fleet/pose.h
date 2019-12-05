@@ -42,7 +42,7 @@ void findPose(const cv::Point& center, inter_iit_uav_fleet::Pose& box_pose)
     Eigen::Vector3d quadCoord = (camToQuad*scaleUp*invCamMatrix*imgVec) + tCam;
 
     Eigen::Vector3d globCoord = quadToGlob2*quadCoord;
-    box_pose.position.x = (globCoord[0])/R + quad_GPS.longitude;
-    box_pose.position.y = (globCoord[1])/R + quad_GPS.latitude;
+    box_pose.position.x = (180/CV_PI)*(globCoord[0])/R + quad_GPS.longitude;
+    box_pose.position.y = (180/CV_PI)*(globCoord[1])/R + quad_GPS.latitude;
 
 }
