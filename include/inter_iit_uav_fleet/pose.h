@@ -1,5 +1,6 @@
 #include <tf/tf.h>
 #include <tf_conversions/tf_eigen.h>
+#include <GeographicLib/AzimuthalEquidistant.hpp>
 #define R 6387100
 
 void findPose(const cv::Point& center, inter_iit_uav_fleet::Pose& box_pose)
@@ -42,7 +43,7 @@ void findPose(const cv::Point& center, inter_iit_uav_fleet::Pose& box_pose)
     Eigen::Vector3d quadCoord = (camToQuad*scaleUp*invCamMatrix*imgVec) + tCam;
 
     Eigen::Vector3d globCoord = quadToGlob2*quadCoord;
-    box_pose.position.x = (180/CV_PI)*(globCoord[0])/R + quad_GPS.longitude;
-    box_pose.position.y = (180/CV_PI)*(globCoord[1])/R + quad_GPS.latitude;
-
+    GeographicLib::AzimuthalEquidistant obj;
+    obj.Reverse(lat0,long0,globCoord[0],globCoord[1],box_pose.position.x,box_pose.position.y);
+    box_pose.position.z = 0;
 }

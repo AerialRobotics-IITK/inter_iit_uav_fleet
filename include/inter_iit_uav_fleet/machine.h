@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include <std_msgs/String.h>
+#include <std_srvs/SetBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/WaypointPull.h>
 

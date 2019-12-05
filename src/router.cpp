@@ -4,6 +4,7 @@
 
 #include <std_msgs/String.h>
 #include <std_msgs/Int16.h>
+#include <std_srvs/SetBool.h>
 #include <inter_iit_uav_fleet/RouterData.h>
 
 #define echo(x) std::cout << x << std::endl
