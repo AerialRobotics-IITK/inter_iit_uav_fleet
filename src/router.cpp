@@ -40,23 +40,25 @@ void updateTable()
     // echo(obj_data.imageID);
     for(int i = 0; i < obj_data.object_poses.size(); i++)
     {
-        bool accept = false;
+        bool accept = true;
         // if(verbose) echo("Processing detector values");
-        for(int j = 0; j < lastEntry; j++)
+        for(int j = 0; j <= lastEntry; j++)
         {
-            if(sq(objects[j].lat - obj_data.object_poses.at(i).position.x) + \
-                sq(objects[j].lon - obj_data.object_poses.at(i).position.y) < loc_error)
-            { accept = false; break; }
-            if(verbose) echo("Rejected");
+            if((sq(objects[j].lat - obj_data.object_poses.at(i).position.x) + sq(objects[j].lon - obj_data.object_poses.at(i).position.y)) < loc_error)
+            {   
+                accept = false; 
+                // if(verbose) echo("Rejected");
+                break; 
+            }
         }
 
-        if(accept || lastEntry == -1)
+        if(accept)
         {
             if(lastEntry == 3) break;
             lastEntry++;
             objects[lastEntry].lat = obj_data.object_poses.at(i).position.x;
             objects[lastEntry].lon = obj_data.object_poses.at(i).position.y;
-            if(verbose) echo("Accepted(D): " << objects[lastEntry].lat << " " << " " << objects[lastEntry].lon << "at pos: " << lastEntry);
+            if(verbose) echo("Accepted(D): " << objects[lastEntry].lat << " " << " " << objects[lastEntry].lon << " at index: " << lastEntry);
         }
     }
 
@@ -69,7 +71,7 @@ void updateTable()
             lastEntry++;
             objects[lastEntry].lat = routerData[i].position.x;
             objects[lastEntry].lon = routerData[i].position.y;
-            if(verbose) echo("Accepted(R): " << objects[lastEntry].lat << " " << " " << objects[lastEntry].lon << "at pos: " << lastEntry);
+            if(verbose) echo("Accepted(R): " << objects[lastEntry].lat << " " << " " << objects[lastEntry].lon << " at index: " << lastEntry);
         }
     }
 }
@@ -78,7 +80,7 @@ void updateRouters(ros::Publisher *pub)
 {
     inter_iit_uav_fleet::RouterData msg;
 
-    if(lastEntry > entries[0] || lastEntry > entries[1])
+    if((lastEntry > entries[0] && entries[0] != 3)|| (lastEntry > entries[1] && entries[1] != 3))
     {
         int i = lastEntry - entries[0], j = lastEntry - entries[1];
         for(int k = 0; k < i; k++)
@@ -88,7 +90,7 @@ void updateRouters(ros::Publisher *pub)
             msg.position.y = objects[lastEntry - k].lon; 
             msg.position.z = 0;
             pub->publish(msg);
-            if(verbose) echo("Published: " << objects[lastEntry-k].lat << " " << " " << objects[lastEntry-k].lon << "from pos: " << lastEntry-k);
+            if(verbose) echo("Published: " << objects[lastEntry-k].lat << " " << " " << objects[lastEntry-k].lon << " from index: " << lastEntry-k);
         }
         for(int k = 0; k < j; k++)
         {
@@ -97,7 +99,7 @@ void updateRouters(ros::Publisher *pub)
             msg.position.y = objects[lastEntry - k].lon; 
             msg.position.z = 0;
             pub->publish(msg);
-            if(verbose) echo("Published: " << objects[lastEntry-k].lat << " " << " " << objects[lastEntry-k].lon << "from pos: " << lastEntry-k);
+            if(verbose) echo("Published: " << objects[lastEntry-k].lat << " " << " " << objects[lastEntry-k].lon << " from index: " << lastEntry-k);
         }
     }
 }
@@ -106,8 +108,8 @@ void saveData()
 {
     std::ofstream file;
     file.open(gpsPath);
-    file << std::to_string(lastEntry) << "\n";
-    for (int i = 0; i < lastEntry; i++) file << std::to_string(objects[i].lat) + \
+    file << std::to_string(lastEntry + 1) << "\n";
+    for (int i = 0; i < lastEntry + 1; i++) file << std::to_string(objects[i].lat) + \
      " " + std::to_string(objects[i].lon) + "\n";
     file.close();
     return;
@@ -155,8 +157,9 @@ int main(int argc, char** argv)
     }
 
     std_srvs::SetBool srv; srv.request.data = false;
-    while(!srv.response.success) terminator.call(srv);
     saveData();
+    echo("Saved gps location data");
+    while(!srv.response.success) terminator.call(srv);
 
     return 0;
 }
