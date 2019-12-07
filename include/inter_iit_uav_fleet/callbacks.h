@@ -21,9 +21,9 @@ int imageID = 0;
 cv::Mat src = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
 
 // storage variables
-nav_msgs::Odometry mav_pose_, return_pose_;
-inter_iit_uav_fleet::UTMPose utm_pose_, home_pose_;
-inter_iit_uav_fleet::Poses obj_data, helipad;
+nav_msgs::Odometry mav_pose_, return_pose_, home_pose_;
+// inter_iit_uav_fleet::UTMPose utm_pose_, home_pose_;
+inter_iit_uav_fleet::Poses obj_data;
 mavros_msgs::WaypointReached prev_wp;
 mavros_msgs::State mav_mode_;
 geometry_msgs::PointStamped home_msg_;
@@ -97,7 +97,7 @@ bool serviceCall(inter_iit_uav_fleet::signal::Request &req, inter_iit_uav_fleet:
 // state variable callbacks
 void mav_pose_cb_(const nav_msgs::Odometry &msg){mav_pose_ = msg;}
 void obj_cb_(const inter_iit_uav_fleet::Poses &msg){obj_data = msg;}
-void utm_pose_cb_(const inter_iit_uav_fleet::UTMPose &msg){utm_pose_ = msg;}
+// void utm_pose_cb_(const inter_iit_uav_fleet::UTMPose &msg){utm_pose_ = msg;}
 void wp_reached_cb_(const mavros_msgs::WaypointReached &msg){prev_wp = msg;}
 void state_cb_(const mavros_msgs::State &msg){mav_mode_ = msg;}
 void gpsCallback(const sensor_msgs::NavSatFix& msg){gps = msg;}

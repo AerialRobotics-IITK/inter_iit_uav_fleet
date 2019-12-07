@@ -76,37 +76,45 @@ namespace state_machine
 
         // publishers
         ros::Publisher command_pub_ = nh.advertise<geometry_msgs::PointStamped>("mission_info", 10);
-        ros::Publisher pose_pub_ = nh.advertise<inter_iit_uav_fleet::Poses>("object_poses", 1);
+        ros::Publisher pose_pub_ = nh.advertise<inter_iit_uav_fleet::Poses>("objects", 1);
 
         // subscribers
-        ros::Subscriber utm_pose_sub_ = nh.subscribe("utm_pose", 1, utm_pose_cb_);
-        ros::Subscriber mav_pose_sub_ = nh.subscribe("odometry", 10, mav_pose_cb_);
-        ros::Subscriber mission_wp_sub = nh.subscribe("mission/reached", 10, wp_reached_cb_);
-        ros::Subscriber state_sub_ = nh.subscribe("state",1, state_cb_);
+        // ros::Subscriber utm_pose_sub_ = nh.subscribe("utm_pose", 1, utm_pose_cb_);
+        ros::Subscriber mav_pose_sub_ = nh.subscribe("mavros/local_position/odom", 10, mav_pose_cb_);
+        ros::Subscriber mission_wp_sub = nh.subscribe("mavros/mission/reached", 10, wp_reached_cb_);
+        ros::Subscriber state_sub_ = nh.subscribe("mavros/state",1, state_cb_);
 
         // service clients
-        ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("set_mode");
-        ros::ServiceClient mission_client = nh.serviceClient<mavros_msgs::WaypointPull>("mission/pull");
+        ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+        ros::ServiceClient mission_client = nh.serviceClient<mavros_msgs::WaypointPull>("mavros/mission/pull");
         ros::ServiceClient detector_client = nh.serviceClient<inter_iit_uav_fleet::signal>("detector/terminate");
 
-        ros::ServiceServer terminate_server = nh.advertiseService("stop", terminator);
+        ros::ServiceServer terminate_server = nh.advertiseService("planner/stop", terminator);
 
         // state transition functions
 
         void TakeOff(CmdTakeOff const& cmd)
-        {
+        { 
             if(verbose)   echo(" Starting execution");
 
             ros::Rate loopRate(10);
 
-            utm_pose_.pose.position.z = -DBL_MAX;
-            if(verbose)   echo("  Waiting for UTM position");
-            while(utm_pose_.pose.position.z == -DBL_MAX){
+            // utm_pose_.pose.position.z = -DBL_MAX;
+            // if(verbose)   echo("  Waiting for UTM position");
+            // while(utm_pose_.pose.position.z == -DBL_MAX){
+            //     ros::spinOnce();
+            //     loopRate.sleep();
+            // }
+            // if(verbose)   echo("  Received UTM position");
+
+            if(verbose)   echo("  Waiting for odometry");
+            mav_pose_.pose.pose.position.z = -DBL_MAX;
+            while(mav_pose_.pose.pose.position.z == -DBL_MAX){
                 ros::spinOnce();
                 loopRate.sleep();
             }
-            if(verbose)   echo("  Received UTM position");
-            home_pose_ = utm_pose_;
+            if(verbose)   echo("  Received odometry");
+            home_pose_ = mav_pose_;
 
             return;
         }
@@ -154,7 +162,7 @@ namespace state_machine
             mission_set_mode.request.custom_mode = "AUTO.MISSION";
             bool mode_set_= false;
 
-            if(verbose)   echo("  Changing mode to Mission");                                                           // Add state check
+            if(verbose)   echo("  Changing mode to Mission");
             while (!mode_set_){
                 ros::spinOnce();
                 if (set_mode_client.call(mission_set_mode) && mission_set_mode.response.mode_sent){
@@ -207,13 +215,13 @@ namespace state_machine
                 if(verbose)   echo("  detector node stopped");
             }
 
-            utm_pose_.pose.position.z = -DBL_MAX;
-            if(verbose)   echo("  Waiting for UTM position");
-            while(utm_pose_.pose.position.z == -DBL_MAX){
-                ros::spinOnce();
-                loopRate.sleep();
-            }
-            if(verbose)   echo("  Received UTM position");
+            // utm_pose_.pose.position.z = -DBL_MAX;
+            // if(verbose)   echo("  Waiting for UTM position");
+            // while(utm_pose_.pose.position.z == -DBL_MAX){
+            //     ros::spinOnce();
+            //     loopRate.sleep();
+            // }
+            // if(verbose)   echo("  Received UTM position");
 
             mav_pose_.pose.pose.position.z = -DBL_MAX;
             if(verbose)   echo("  Waiting for odometry");
@@ -223,8 +231,8 @@ namespace state_machine
             }
 
             mission_msg.header.stamp = ros::Time::now();
-            mission_msg.point.x = home_pose_.pose.position.x + mav_pose_.pose.pose.position.x - utm_pose_.pose.position.x;
-            mission_msg.point.y = home_pose_.pose.position.y + mav_pose_.pose.pose.position.y - utm_pose_.pose.position.y;
+            mission_msg.point.x = home_pose_.pose.pose.position.x;
+            mission_msg.point.y = home_pose_.pose.pose.position.y;
             mission_msg.point.z = hover_height;
 
             if(verbose)   echo("  Home location: x = " << mission_msg.point.x << ", y = " << mission_msg.point.y);
@@ -300,7 +308,7 @@ namespace state_machine
             if(verbose)   echo("  Enroute to LZ, please wait");
             while(!AtLoc){
                 ros::spinOnce();
-                dist = sq(mav_pose_.pose.pose.position.x - home_msg_.point.x) + sq(mav_pose_.pose.pose.position.y - home_msg_.point.y);
+                dist = sq(mav_pose_.pose.pose.position.x - home_msg_.pose.pose.position.x) + sq(mav_pose_.pose.pose.position.y - home_msg_.pose.pose.position.y);
                 AtLoc = (dist > sq(loc_error)) ? false : true;
                 loopRate.sleep();
             }
@@ -362,7 +370,7 @@ namespace state_machine
     typedef msm::back::state_machine<fsm> fsm_;
 
     // state list
-    static char const *const state_names[] = {"Rest", "Hover", "Exploring", "ReachMailbox", "Descent", "Drop", "ReachLZ"};
+    static char const *const state_names[] = {"Rest", "Hover", "Exploring", "ReachLZ"};
 
     // helper function -- output current state
     void echo_state(fsm_ const& msg){ if(verbose) echo("Current state -- " << state_names[msg.current_state()[0]]); }
