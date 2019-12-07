@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     std::vector<std::vector<int>> hull;
     std::vector<cv::Point> corners;
 
-    ros::Subscriber image_sub = ph.subscribe<sensor_msgs::Image>("image", 30, imageCallback);
+    ros::Subscriber image_sub = nh.subscribe<sensor_msgs::Image>("image", 30, imageCallback);
 
     ros::Publisher thresh_imgPub = ph.advertise<sensor_msgs::Image>("thresh_image", 1);
     ros::Publisher contour_imgPub = ph.advertise<sensor_msgs::Image>("contours", 1);
