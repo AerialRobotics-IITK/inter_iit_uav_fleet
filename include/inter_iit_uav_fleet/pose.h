@@ -9,7 +9,7 @@ void findPose(const cv::Point& center, inter_iit_uav_fleet::Pose& box_pose)
     tf::Quaternion q1(odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
     Eigen::Quaterniond quat = Eigen::Quaterniond(q1.w(), q1.x(), q1.y(), q1.z());
     
-    quadToGlob = quat.normalized().toRotationMatrix().inverse();
+    quadToGlob = quat.normalized().toRotationMatrix();
 
     // for (int i=0;i<3;i++){
     //     for (int j=0;j<3;j++){
