@@ -30,7 +30,7 @@ mavros_msgs::WaypointReached prev_wp;
 mavros_msgs::State mav_mode_;
 geometry_msgs::PointStamped home_msg_;
 sensor_msgs::NavSatFix quad_GPS;
-std_msgs::Float64 heading;
+//std_msgs::Float64 heading;
 nav_msgs::Odometry odom;
 
 //camera parameters
@@ -108,13 +108,13 @@ void obj_cb_(const inter_iit_uav_fleet::Poses &msg){obj_data = msg;}
 void utm_pose_cb_(const inter_iit_uav_fleet::UTMPose &msg){utm_pose_ = msg;}
 void wp_reached_cb_(const mavros_msgs::WaypointReached &msg){prev_wp = msg;}
 void state_cb_(const mavros_msgs::State &msg){mav_mode_ = msg;}
-void compass_cb_(const std_msgs::Float64 msg){
-    static int count=0;
-    if (count <=10){
-        heading = msg;
-        count++;
-    }
-}
+// void compass_cb_(const std_msgs::Float64 msg){
+//     static int count=0;
+//     if (count <=10){
+//         heading = msg;
+//         count++;
+//     }
+// }
 void odom_cb_(const nav_msgs::Odometry msg){odom = msg;}
 void GPS_cb_(const sensor_msgs::NavSatFix msg){quad_GPS = msg;}
 

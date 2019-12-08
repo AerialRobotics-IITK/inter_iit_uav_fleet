@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
     ros::Subscriber image_sub = ph.subscribe<sensor_msgs::Image>("image", 30, imageCallback);
     ros::Subscriber GPS_sub = ph.subscribe<sensor_msgs::NavSatFix>("GPS", 30, GPS_cb_);
-    ros::Subscriber compass_sub = ph.subscribe<std_msgs::Float64>("compass", 30, compass_cb_);
+    //ros::Subscriber compass_sub = ph.subscribe<std_msgs::Float64>("compass", 30, compass_cb_);
     ros::Subscriber odom_sub = ph.subscribe<nav_msgs::Odometry>("odom", 30, odom_cb_);
 
     ros::Publisher thresh_imgPub = ph.advertise<sensor_msgs::Image>("thresh_image", 1);
