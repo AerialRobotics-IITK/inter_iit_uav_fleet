@@ -72,6 +72,7 @@ int main(int argc, char** argv)
     ros::Publisher thresh_imgPub = ph.advertise<sensor_msgs::Image>("thresh_image", 1);
     ros::Publisher contour_imgPub = ph.advertise<sensor_msgs::Image>("contours", 1);
     ros::Publisher marked_imgPub = ph.advertise<sensor_msgs::Image>("marked_image", 1);
+    ros::Publisher obj_gpsPub = ph.advertise<inter_iit_uav_fleet::Pose>("obj_gps", 1);
 
     ros::ServiceServer exec_server = ph.advertiseService("terminate", serviceCall);
 
@@ -118,6 +119,7 @@ int main(int argc, char** argv)
                         cv::Point center((list_corners.at(0).at(0).x+list_corners.at(0).at(1).x+list_corners.at(0).at(2).x+list_corners.at(0).at(3).x)/4,(list_corners.at(0).at(0).y+list_corners.at(0).at(1).y+list_corners.at(0).at(2).y+list_corners.at(0).at(3).y)/4);
                         box_pose.boxID = i;
                         findPose(center,box_pose);
+                        obj_gpsPub.publish(box_pose);
                     }
                 }
             }

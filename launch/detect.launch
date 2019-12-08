@@ -2,10 +2,13 @@
 <launch>
     <arg name="mav_name" default="magnus"/>
     <group ns="$(arg mav_name)">
-        <rosparam file="$(find inter_iit_uav_fleet)/cfg/params.yaml"/>s
+        <rosparam file="$(find inter_iit_uav_fleet)/cfg/params.yaml"/>
+        <rosparam file="$(find inter_iit_uav_fleet)/cfg/ocam_640x480.yaml"/>
         <node pkg="inter_iit_uav_fleet" type="detector" name="detector" output="screen" required="true">
             <!-- <rosparam file="$(env HOME)/.ros/camera_info/mv.yaml"/> -->
             <remap from="detector/image" to="/magnus/camera/image_raw"/>
+            <remap from="detector/GPS" to="/mavros/global_position/raw/fix"/> 
+            <remap from="detector/odom" to="/mavros/local_position/odom"/>
         </node>
     </group>
 </launch>
