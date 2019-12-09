@@ -76,7 +76,6 @@ namespace state_machine
 
         // publishers
         ros::Publisher command_pub_ = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
-        ros::Publisher pose_pub_ = nh.advertise<inter_iit_uav_fleet::Poses>("objects", 1);
 
         // subscribers
         // ros::Subscriber utm_pose_sub_ = nh.subscribe("utm_pose", 1, utm_pose_cb_);
