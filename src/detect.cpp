@@ -1,8 +1,8 @@
-
 #include <inter_iit_uav_fleet/callbacks.h>
 #include <inter_iit_uav_fleet/outlier_filter.h>
+#include <inter_iit_uav_fleet/pose.h>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     ros::init(argc, argv, "object_detect");
     ros::NodeHandle nh, ph("~");
@@ -14,6 +14,47 @@ int main(int argc, char** argv)
     nh.getParam("hsvMax/SMax", SMax);
     nh.getParam("hsvMax/VMax", VMax);
 
+    std::vector<double> tempList;
+    cv::Mat intrinsic = cv::Mat_<double>(3, 3);
+    int tempIdx = 0;
+
+    nh.getParam("camera_matrix/data", tempList);
+    tempIdx = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            intrinsic.at<double>(i, j) = tempList[tempIdx++];
+        }
+    }
+
+    nh.getParam("camera/translation", tempList);
+    for (int i = 0; i < 3; i++)
+    {
+        tCam(i) = tempList[i];
+    }
+
+    nh.getParam("camera/rotation", tempList);
+    tempIdx = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            quadToCam(i, j) = tempList[tempIdx++];
+        }
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            camMatrix(i, j) = intrinsic.at<double>(i, j);
+        }
+    }
+
+    invCamMatrix = camMatrix.inverse();
+    camToQuad = quadToCam.inverse();
+
     cv::Mat src_hsv, thresholded_hsv, thresholded_hsv1, drawing, drawing1;
 
     std::vector<std::vector<cv::Point>> list_contours;
@@ -21,29 +62,35 @@ int main(int argc, char** argv)
     std::vector<std::vector<int>> hull;
     std::vector<cv::Point> corners;
 
-    ros::Subscriber image_sub = nh.subscribe<sensor_msgs::Image>("image", 30, imageCallback);
+    ros::Subscriber image_sub = ph.subscribe<sensor_msgs::Image>("image", 10, imageCallback);
+    ros::Subscriber GPS_sub = ph.subscribe("GPS", 5, gpsCallback);
+    //ros::Subscriber compass_sub = ph.subscribe<std_msgs::Float64>("compass", 30, compass_cb_);
+    ros::Subscriber mav_pose_sub_ = ph.subscribe("odom", 10, mav_pose_cb_);
 
     ros::Publisher thresh_imgPub = ph.advertise<sensor_msgs::Image>("thresh_image", 1);
     ros::Publisher contour_imgPub = ph.advertise<sensor_msgs::Image>("contours", 1);
     ros::Publisher marked_imgPub = ph.advertise<sensor_msgs::Image>("marked_image", 1);
+    ros::Publisher obj_gpsPub = ph.advertise<inter_iit_uav_fleet::Poses>("obj_gps", 1);
 
     ros::ServiceServer exec_server = ph.advertiseService("terminate", serviceCall);
 
     dynamic_reconfigure::Server<inter_iit_uav_fleet::reconfigConfig> cfg_server;
     dynamic_reconfigure::Server<inter_iit_uav_fleet::reconfigConfig>::CallbackType call_f = boost::bind(&cfgCallback, _1, _2);
-    cfg_server.setCallback(call_f); 
-
+    cfg_server.setCallback(call_f);
 
     ros::Rate loop_rate(10);
 
-    while (ros::ok()  && !(execFlag == -1))
+    inter_iit_uav_fleet::Poses pose_msg;
+
+    while (ros::ok() && !(execFlag == -1))
     {
         // while(imageID < 1 && !(execFlag == -1)){ if(execFlag == 1) ros::spinOnce(); }
-                
-        if(execFlag == 1)
+
+        if (execFlag == 1)
         {
             // if(!isRectified) cv::undistort(src, src, camMat, distCoeffs);
 
+            pose_msg.object_poses.clear();
             cv::GaussianBlur(src, src, cv::Size(3, 3), 0, 0);
             cv::cvtColor(src, src_hsv, CV_BGR2HSV);
             cv::inRange(src_hsv, cv::Scalar(HMin, SMin, VMin), cv::Scalar(HMax, SMax, VMax), thresholded_hsv);
@@ -56,7 +103,8 @@ int main(int argc, char** argv)
 
             for (int i = 0; i < list_contours.size(); i++)
             {
-                if (cv::contourArea(list_contours.at(i)) > 0.00025 * src.rows * src.cols)
+                inter_iit_uav_fleet::Pose box_pose;
+                if ((box_pose.area = cv::contourArea(list_contours.at(i))) > 0.00025 * src.rows * src.cols)
                 {
                     list_corners.clear();
                     corners.clear();
@@ -66,8 +114,14 @@ int main(int argc, char** argv)
                     outlier_filter(list_contours.at(i), hull.at(i), corners);
                     list_corners.push_back(corners);
 
-                    if (!list_corners.at(0).empty() && list_corners.at(0).size() == 4);
+                    if (!list_corners.at(0).empty() && list_corners.at(0).size() == 4)
+                    {
                         cv::drawContours(src, list_corners, 0, cv::Scalar(255, 0, 0));
+                        cv::Point center((list_corners.at(0).at(0).x + list_corners.at(0).at(1).x + list_corners.at(0).at(2).x + list_corners.at(0).at(3).x) / 4, (list_corners.at(0).at(0).y + list_corners.at(0).at(1).y + list_corners.at(0).at(2).y + list_corners.at(0).at(3).y) / 4);
+                        box_pose.boxID = i;
+                        findPose(center, box_pose);
+                        pose_msg.object_poses.push_back(box_pose);
+                    }
                 }
             }
 
@@ -75,6 +129,9 @@ int main(int argc, char** argv)
             sensor_msgs::ImagePtr thresh_msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", thresholded_hsv1).toImageMsg();
             sensor_msgs::ImagePtr contour_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", drawing).toImageMsg();
 
+            pose_msg.imageID = imageID;
+            pose_msg.stamp = ros::Time::now();
+            obj_gpsPub.publish(pose_msg);
             marked_imgPub.publish(marked_msg);
             thresh_imgPub.publish(thresh_msg);
             contour_imgPub.publish(contour_msg);
@@ -82,7 +139,7 @@ int main(int argc, char** argv)
 
         loop_rate.sleep();
         ros::spinOnce();
-    } 
+    }
 
     return 0;
 }

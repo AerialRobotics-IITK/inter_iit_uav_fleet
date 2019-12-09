@@ -75,7 +75,7 @@ namespace state_machine
         ros::NodeHandle nh;
 
         // publishers
-        ros::Publisher command_pub_ = nh.advertise<geometry_msgs::PointStamped>("mission_info", 10);
+        ros::Publisher command_pub_ = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
         ros::Publisher pose_pub_ = nh.advertise<inter_iit_uav_fleet::Poses>("objects", 1);
 
         // subscribers
@@ -131,7 +131,7 @@ namespace state_machine
             if(verbose)   echo(" Exploring");
             ros::Rate loopRate(10);
 
-            geometry_msgs::PointStamped mission_msg;
+            geometry_msgs::PoseStamped mission_msg;
 
             inter_iit_uav_fleet::signal start;
             start.request.signal = 1;
@@ -173,7 +173,7 @@ namespace state_machine
             }
             if(verbose)   echo("  Changed mode to Mission");
 
-            while(!ContMission || prev_wp.wp_seq != num_wp)
+            while(ContMission)
             {
                 ros::spinOnce();
                 loopRate.sleep();
@@ -184,7 +184,7 @@ namespace state_machine
                 ros::spinOnce();
 
                 mission_msg.header.stamp = ros::Time::now();
-                mission_msg.point = mav_pose_.pose.pose.position;
+                mission_msg.pose.position = mav_pose_.pose.pose.position;
                 
                 command_pub_.publish(mission_msg);
                 
@@ -207,7 +207,7 @@ namespace state_machine
             if(verbose)   echo(" Going to LZ");
             ros::Rate loopRate(10);
 
-            geometry_msgs::PointStamped mission_msg;
+            geometry_msgs::PoseStamped mission_msg;
 
             inter_iit_uav_fleet::signal stop;
             stop.request.signal = 0;
@@ -231,11 +231,11 @@ namespace state_machine
             }
 
             mission_msg.header.stamp = ros::Time::now();
-            mission_msg.point.x = home_pose_.pose.pose.position.x;
-            mission_msg.point.y = home_pose_.pose.pose.position.y;
-            mission_msg.point.z = hover_height;
+            mission_msg.pose.position.x = home_pose_.pose.pose.position.x;
+            mission_msg.pose.position.y = home_pose_.pose.pose.position.y;
+            mission_msg.pose.position.z = hover_height;
 
-            if(verbose)   echo("  Home location: x = " << mission_msg.point.x << ", y = " << mission_msg.point.y);
+            if(verbose)   echo("  Home location: x = " << mission_msg.pose.position.x << ", y = " << mission_msg.pose.position.y);
             home_msg_ = mission_msg;
 
             command_pub_.publish(mission_msg);
@@ -250,7 +250,7 @@ namespace state_machine
             mavros_msgs::SetMode land_set_mode;
             bool mode_set_ = false, LandingDone = false;
             land_set_mode.request.custom_mode = "AUTO.LAND";
-            geometry_msgs::PointStamped mission_msg;
+            geometry_msgs::PoseStamped mission_msg;
 
             if(verbose)   echo("  Waiting for odometry");
             mav_pose_.pose.pose.position.z = -DBL_MAX;
@@ -264,9 +264,9 @@ namespace state_machine
             int i = 0;
             while(!LandingDone){
                 mission_msg.header.stamp = ros::Time::now();
-                mission_msg.point.x = mav_pose_.pose.pose.position.x;
-                mission_msg.point.y = mav_pose_.pose.pose.position.y;
-                mission_msg.point.z = mav_pose_.pose.pose.position.z - descent_step;
+                mission_msg.pose.position.x = mav_pose_.pose.pose.position.x;
+                mission_msg.pose.position.y = mav_pose_.pose.pose.position.y;
+                mission_msg.pose.position.z = mav_pose_.pose.pose.position.z - descent_step;
                 command_pub_.publish(mission_msg);
                 LandingDone = (mav_pose_.pose.pose.position.z > land_height) ? false : true;
                 ros::spinOnce();
@@ -308,7 +308,7 @@ namespace state_machine
             if(verbose)   echo("  Enroute to LZ, please wait");
             while(!AtLoc){
                 ros::spinOnce();
-                dist = sq(mav_pose_.pose.pose.position.x - home_msg_.pose.pose.position.x) + sq(mav_pose_.pose.pose.position.y - home_msg_.pose.pose.position.y);
+                dist = sq(mav_pose_.pose.pose.position.x - home_msg_.pose.position.x) + sq(mav_pose_.pose.pose.position.y - home_msg_.pose.position.y);
                 AtLoc = (dist > sq(loc_error)) ? false : true;
                 loopRate.sleep();
             }

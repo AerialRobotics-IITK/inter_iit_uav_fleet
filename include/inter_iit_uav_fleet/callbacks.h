@@ -1,18 +1,20 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
+#include <eigen3/Eigen/Eigen>
 
 #include <inter_iit_uav_fleet/reconfigConfig.h>
 #include <dynamic_reconfigure/server.h>
 
 #include <sensor_msgs/Image.h>
 #include <nav_msgs/Odometry.h>
-#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/WaypointReached.h>
 #include <mavros_msgs/State.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <std_srvs/SetBool.h>
-
-#include <inter_iit_uav_fleet/UTMPose.h>
+#include <std_msgs/Float64.h>
+#include <nav_msgs/Odometry.h>
+// #include <inter_iit_uav_fleet/UTMPose.h>
 #include <inter_iit_uav_fleet/Poses.h>
 #include <inter_iit_uav_fleet/signal.h>
 
@@ -26,8 +28,12 @@ nav_msgs::Odometry mav_pose_, return_pose_, home_pose_;
 inter_iit_uav_fleet::Poses obj_data;
 mavros_msgs::WaypointReached prev_wp;
 mavros_msgs::State mav_mode_;
-geometry_msgs::PointStamped home_msg_;
+geometry_msgs::PoseStamped home_msg_;
 sensor_msgs::NavSatFix gps;
+
+//camera parameters
+Eigen::Matrix3d camMatrix, invCamMatrix, camToQuad, quadToCam;
+Eigen::Vector3d tCam;
 
 // hsv range variables
 int HMax=90, HMin=70, SMax=255, SMin=0, VMax=255, VMin=0;
@@ -107,32 +113,34 @@ void cfgCallback(inter_iit_uav_fleet::reconfigConfig &config, uint32_t level){
 
         case 0: isRectified = config.is_rectified;
                 ROS_INFO("Set isRectified to %d", isRectified); break;
+        case 1: totalObjects = config.total_objects;
+                ROS_INFO("Set numObjects to %d", totalObjects);break;
 
-        // case 1: tCam(0) = config.groups.camera_translation.t_x;
-        //         ROS_INFO("Set t_x to %f", tCam(0)); break;
-        // case 2: tCam(1) = config.groups.camera_translation.t_y;
-        //         ROS_INFO("Set t_y to %f", tCam(1)); break;
-        // case 3: tCam(2) = config.groups.camera_translation.t_z;
-        //         ROS_INFO("Set t_z to %f", tCam(2)); break;
+            // case 1: tCam(0) = config.groups.camera_translation.t_x;
+            //         ROS_INFO("Set t_x to %f", tCam(0)); break;
+            // case 2: tCam(1) = config.groups.camera_translation.t_y;
+            //         ROS_INFO("Set t_y to %f", tCam(1)); break;
+            // case 3: tCam(2) = config.groups.camera_translation.t_z;
+            //         ROS_INFO("Set t_z to %f", tCam(2)); break;
 
-        // case 4: quadToCam(0,0) = config.groups.camera_rotation.r_xx;
-        //         ROS_INFO("Set r_xx to %f", quadToCam(0,0)); break;
-        // case 5: quadToCam(0,1) = config.groups.camera_rotation.r_xy;
-        //         ROS_INFO("Set r_xy to %f", quadToCam(0,1)); break;
-        // case 6: quadToCam(0,2) = config.groups.camera_rotation.r_xz;
-        //         ROS_INFO("Set r_xz to %f", quadToCam(0,2)); break;
-        // case 7: quadToCam(1,0) = config.groups.camera_rotation.r_yx;
-        //         ROS_INFO("Set r_yx to %f", quadToCam(1,0)); break;
-        // case 8: quadToCam(1,1) = config.groups.camera_rotation.r_yy;
-        //         ROS_INFO("Set r_yy to %f", quadToCam(1,1)); break;
-        // case 9: quadToCam(1,2) = config.groups.camera_rotation.r_yz;
-        //         ROS_INFO("Set r_yz to %f", quadToCam(1,2)); break;
-        // case 10: quadToCam(2,0) = config.groups.camera_rotation.r_zx;
-        //         ROS_INFO("Set r_zx to %f", quadToCam(2,0)); break;
-        // case 11: quadToCam(2,1) = config.groups.camera_rotation.r_zy;
-        //         ROS_INFO("Set r_zy to %f", quadToCam(2,1)); break;
-        // case 12: quadToCam(2,2) = config.groups.camera_rotation.r_zz;
-        //         ROS_INFO("Set r_zz to %f", quadToCam(2,2)); break;
+            // case 4: quadToCam(0,0) = config.groups.camera_rotation.r_xx;
+            //         ROS_INFO("Set r_xx to %f", quadToCam(0,0)); break;
+            // case 5: quadToCam(0,1) = config.groups.camera_rotation.r_xy;
+            //         ROS_INFO("Set r_xy to %f", quadToCam(0,1)); break;
+            // case 6: quadToCam(0,2) = config.groups.camera_rotation.r_xz;
+            //         ROS_INFO("Set r_xz to %f", quadToCam(0,2)); break;
+            // case 7: quadToCam(1,0) = config.groups.camera_rotation.r_yx;
+            //         ROS_INFO("Set r_yx to %f", quadToCam(1,0)); break;
+            // case 8: quadToCam(1,1) = config.groups.camera_rotation.r_yy;
+            //         ROS_INFO("Set r_yy to %f", quadToCam(1,1)); break;
+            // case 9: quadToCam(1,2) = config.groups.camera_rotation.r_yz;
+            //         ROS_INFO("Set r_yz to %f", quadToCam(1,2)); break;
+            // case 10: quadToCam(2,0) = config.groups.camera_rotation.r_zx;
+            //         ROS_INFO("Set r_zx to %f", quadToCam(2,0)); break;
+            // case 11: quadToCam(2,1) = config.groups.camera_rotation.r_zy;
+            //         ROS_INFO("Set r_zy to %f", quadToCam(2,1)); break;
+            // case 12: quadToCam(2,2) = config.groups.camera_rotation.r_zz;
+            //         ROS_INFO("Set r_zz to %f", quadToCam(2,2)); break;
     
         case 13: loc_error = config.groups.params.loc_error;
                  ROS_INFO("Set loc_error to %f", loc_error); break;

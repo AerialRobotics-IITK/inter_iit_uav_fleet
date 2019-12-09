@@ -34,23 +34,21 @@ int main(int argc, char **argv)
         transitRate.sleep();       
         machine.process_event(state_machine::CmdExploring());     
         if(verbose)    state_machine::echo_state(machine);
-        
-        transitRate.sleep();       
-        machine.process_event(state_machine::CmdHover());         
-        if(verbose)    state_machine::echo_state(machine);
-
-        transitRate.sleep();       
-        machine.process_event(state_machine::CmdGotoLZ());        
-        if(verbose)   state_machine::echo_state(machine);
-    
-        transitRate.sleep();       
-        machine.process_event(state_machine::CmdHover());         
-        if(verbose)    state_machine::echo_state(machine);
-    
-        transitRate.sleep();       
-        machine.process_event(state_machine::CmdLand());          
-        if(verbose)    state_machine::echo_state(machine);
     }
+    transitRate.sleep();       
+    machine.process_event(state_machine::CmdHover());         
+    if(verbose)    state_machine::echo_state(machine);
+    transitRate.sleep();       
+    machine.process_event(state_machine::CmdGotoLZ());        
+    if(verbose)   state_machine::echo_state(machine);
+
+    transitRate.sleep();       
+    machine.process_event(state_machine::CmdHover());         
+    if(verbose)    state_machine::echo_state(machine);
+
+    transitRate.sleep();       
+    machine.process_event(state_machine::CmdLand());          
+    if(verbose)    state_machine::echo_state(machine);
 
     return 0;
 }

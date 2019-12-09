@@ -1,11 +1,11 @@
 #values for green.bag
 hsvMin:  
-  HMin : 40
-  SMin : 10
-  VMin : 80
+  HMin : 70
+  SMin : 70
+  VMin : 0
 
 hsvMax: 
-  HMax : 50
+  HMax : 110
   SMax : 255
   VMax : 255
 
@@ -27,3 +27,7 @@ names:
   C: f450
 
 mav_name: magnus
+
+camera : 
+  translation : [0, 0, 0]
+  rotation : [0, -1, 0, -1, 0, 0, 0, 0, -1]

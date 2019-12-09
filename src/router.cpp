@@ -44,7 +44,7 @@ void updateTable()
         // if(verbose) echo("Processing detector values");
         for(int j = 0; j <= lastEntry; j++)
         {
-            if((sq(objects[j].lat - obj_data.object_poses.at(i).position.x) + sq(objects[j].lon - obj_data.object_poses.at(i).position.y)) < loc_error)
+            if((abs(objects[j].lat - obj_data.object_poses.at(i).position.x) + abs(objects[j].lon - obj_data.object_poses.at(i).position.y)) < 0.000001*loc_error)
             {   
                 accept = false; 
                 // if(verbose) echo("Rejected");
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
     ros::Publisher routerPub = ph.advertise<inter_iit_uav_fleet::RouterData>("data", 10);
     ros::Publisher numberPub = ph.advertise<std_msgs::Int16>("num", 10);
 
-    ros::ServiceClient terminator = nh.serviceClient<std_srvs::SetBool>("planner/stop");
+    ros::ServiceClient terminator = nh.serviceClient<std_srvs::SetBool>("stop");
 
     std_msgs::Int16 msg;
     entries[0] = entries[1] = -1;
@@ -152,13 +152,13 @@ int main(int argc, char** argv)
         numberPub.publish(msg);
         updateTable();
         updateRouters(&routerPub);
+        saveData();
         if(lastEntry + 1 == numObjects - 1) break;
         loopRate.sleep();
     }
 
     std_srvs::SetBool srv; srv.request.data = false;
-    saveData();
-    echo("Saved gps location data");
+    if (verbose) echo("Calling service stop" << "\n");
     while(!srv.response.success) terminator.call(srv);
 
     return 0;
