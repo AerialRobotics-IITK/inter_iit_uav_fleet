@@ -52,7 +52,7 @@ double hover_time = 5.0;
 double transition_time = 5.0;
 double exit_time = 20.0;
 
-double loc_error = 0.2;
+double loc_error = 10;
 
 // detector switch
 int execFlag = 1;

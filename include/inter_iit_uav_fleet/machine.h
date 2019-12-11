@@ -238,6 +238,7 @@ namespace state_machine
             home_msg_ = mission_msg;
 
             command_pub_.publish(mission_msg);
+	    if(verbose) echo("--published");
             return;
         }
 

@@ -6,10 +6,10 @@
 #include <std_msgs/Int16.h>
 #include <inter_iit_uav_fleet/RouterData.h>
 
-#define echo(x) std::cout << x << std::endl
+#define echo(x) std::cout << std::setprecision(10) << x << std::endl
 #define sq(X) (X)*(X)
 #define numQuads 3
-#define numObjects 5
+int numObjects=5;
 
 std::string mavName, curr_state, names[numQuads];
 inter_iit_uav_fleet::RouterData routerData[numQuads - 1];
@@ -27,7 +27,7 @@ struct locData{
 };
 
 int entries[numQuads];
-struct locData objects[numObjects];
+struct locData objects[5];
 int lastEntry = -1;
 
 void n1Callback(const std_msgs::Int16& msg){entries[0] = msg.data;}
@@ -36,7 +36,7 @@ void r1Callback(const inter_iit_uav_fleet::RouterData& msg){ routerData[0] = msg
 void r2Callback(const inter_iit_uav_fleet::RouterData& msg){ routerData[1] = msg; }
 
 void updateTable()
-{
+{ 
     // echo(obj_data.imageID);
     for(int i = 0; i < obj_data.object_poses.size(); i++)
     {
@@ -44,11 +44,13 @@ void updateTable()
         // if(verbose) echo("Processing detector values");
         for(int j = 0; j <= lastEntry; j++)
         {
-            if((abs(objects[j].lat - obj_data.object_poses.at(i).position.x) + abs(objects[j].lon - obj_data.object_poses.at(i).position.y)) < 0.000001*loc_error)
+            if((fabs(100000*objects[j].lat -100000*obj_data.object_poses.at(i).position.x) + fabs(100000*objects[j].lon - 100000*obj_data.object_poses.at(i).position.y)) < loc_error)
             {   
                 accept = false; 
-                // if(verbose) echo("Rejected");
-                break; 
+                if(verbose) echo("Rejected " << objects[j].lat << " " << objects[j].lon);
+               	if(verbose) echo("Error: " << fabs(100000*objects[j].lat -100000* obj_data.object_poses.at(i).position.x) + fabs(100000*objects[j].lon -100000*obj_data.object_poses.at(i).position.y));
+		if(verbose) echo("Min Error for accept: " << loc_error);
+	        break; 
             }
         }
 
@@ -109,7 +111,7 @@ void saveData()
     std::ofstream file;
     file.open(gpsPath);
     file << std::to_string(lastEntry + 1) << "\n";
-    for (int i = 0; i < lastEntry + 1; i++) file << std::to_string(objects[i].lat) + \
+    for (int i = 0; i < lastEntry + 1; i++) file << std::setprecision(10) << std::to_string(objects[i].lat) + \
      " " + std::to_string(objects[i].lon) + "\n";
     file.close();
     return;
@@ -126,7 +128,8 @@ int main(int argc, char** argv)
 
     nh.getParam("names/A", names[0]);
     nh.getParam("names/B", names[1]);
-    nh.getParam("names/C", names[2]);
+    nh.getParam("names/C", names[2]);    
+    nh.getParam("totalObjects", totalObjects);
     
     for(int i=0; i<numQuads; i++)  if(mavName == names[i]) id = i+1;
     if(verbose) echo("Quad number:" << id);
@@ -153,13 +156,29 @@ int main(int argc, char** argv)
         updateTable();
         updateRouters(&routerPub);
         saveData();
-        if(lastEntry + 1 == numObjects - 1) break;
+        if(lastEntry + 1 == totalObjects) 
+	{
+	
+    		if(verbose) echo("Got " << totalObjects << " objects");
+    		std_srvs::SetBool srv; srv.request.data = false;
+		if(verbose) echo("Calling service stop");
+    		while(!srv.response.success) 
+		{
+			if(verbose) echo("Waiting for response");
+			terminator.call(srv);
+		}
+		if(verbose) echo("Service called succesfully");
+		while(ros::ok())
+		{
+			ros::spinOnce();
+			msg.data = lastEntry;
+			numberPub.publish(msg);
+			updateRouters(&routerPub);
+			loopRate.sleep();
+		}
+	}
         loopRate.sleep();
     }
-
-    std_srvs::SetBool srv; srv.request.data = false;
-    if (verbose) echo("Calling service stop" << "\n");
-    while(!srv.response.success) terminator.call(srv);
 
     return 0;
 }
