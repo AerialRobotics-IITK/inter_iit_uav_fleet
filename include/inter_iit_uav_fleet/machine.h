@@ -184,11 +184,20 @@ namespace state_machine
 
                 mission_msg.header.stamp = ros::Time::now();
                 mission_msg.pose.position = mav_pose_.pose.pose.position;
+		
+		mission_msg.pose.orientation = mav_pose_.pose.pose.orientation;
+		
+		echo("Publishing recursively");
+		for(int i = 0; i < 10; i++)                          {
+                	command_pub_.publish(mission_msg);
+                }
                 
-                command_pub_.publish(mission_msg);
-                
-                while(mav_mode_.mode == "AUTO.MISSION"){
-                    if(set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent) mode_set_ = false;
+		while(mav_mode_.mode == "AUTO.MISSION"){
+                    if(set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent){
+
+			 mode_set_ = false;		
+		    	if(verbose) echo("Mode set to Offboard");
+			}
                     ros::spinOnce();
                 }
                 if(verbose)   echo("   Offboard enabled");
@@ -233,6 +242,7 @@ namespace state_machine
             mission_msg.pose.position.x = home_pose_.pose.pose.position.x;
             mission_msg.pose.position.y = home_pose_.pose.pose.position.y;
             mission_msg.pose.position.z = hover_height;
+	    mission_msg.pose.orientation = home_pose_.pose.pose.orientation;
 
             if(verbose)   echo("  Home location: x = " << mission_msg.pose.position.x << ", y = " << mission_msg.pose.position.y);
             home_msg_ = mission_msg;
@@ -267,6 +277,7 @@ namespace state_machine
                 mission_msg.pose.position.x = mav_pose_.pose.pose.position.x;
                 mission_msg.pose.position.y = mav_pose_.pose.pose.position.y;
                 mission_msg.pose.position.z = mav_pose_.pose.pose.position.z - descent_step;
+		mission_msg.pose.orientation = mav_pose_.pose.pose.orientation;
                 command_pub_.publish(mission_msg);
                 LandingDone = (mav_pose_.pose.pose.position.z > land_height) ? false : true;
                 ros::spinOnce();

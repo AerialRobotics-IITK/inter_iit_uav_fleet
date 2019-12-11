@@ -11,7 +11,8 @@ hsvMax:
 
 verbose: true
 loc_error: 0.2
-totalObjects: 5
+totalObjects: 4
+gps_error: 30
 
 height:
   hover: 5

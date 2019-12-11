@@ -44,12 +44,12 @@ void updateTable()
         // if(verbose) echo("Processing detector values");
         for(int j = 0; j <= lastEntry; j++)
         {
-            if((fabs(100000*objects[j].lat -100000*obj_data.object_poses.at(i).position.x) + fabs(100000*objects[j].lon - 100000*obj_data.object_poses.at(i).position.y)) < loc_error)
+            if((fabs(100000*objects[j].lat -100000*obj_data.object_poses.at(i).position.x) + fabs(100000*objects[j].lon - 100000*obj_data.object_poses.at(i).position.y)) < gps_error)
             {   
                 accept = false; 
-                if(verbose) echo("Rejected " << objects[j].lat << " " << objects[j].lon);
-               	if(verbose) echo("Error: " << fabs(100000*objects[j].lat -100000* obj_data.object_poses.at(i).position.x) + fabs(100000*objects[j].lon -100000*obj_data.object_poses.at(i).position.y));
-		if(verbose) echo("Min Error for accept: " << loc_error);
+                //if(verbose) echo("Rejected " << objects[j].lat << " " << objects[j].lon);
+               	if(verbose) echo("Rejection Error: " << fabs(100000*objects[j].lat -100000* obj_data.object_poses.at(i).position.x) + fabs(100000*objects[j].lon -100000*obj_data.object_poses.at(i).position.y));
+		//if(verbose) echo("Min Error for accept: " << loc_error);
 	        break; 
             }
         }
@@ -125,6 +125,7 @@ int main(int argc, char** argv)
     ros::Rate loopRate(10);
     nh.getParam("verbose", verbose);
     nh.getParam("mav_name", mavName);
+    nh.getParam("gps_error",gps_error);
 
     nh.getParam("names/A", names[0]);
     nh.getParam("names/B", names[1]);
@@ -148,6 +149,7 @@ int main(int argc, char** argv)
     std_msgs::Int16 msg;
     entries[0] = entries[1] = -1;
     
+    if(verbose) echo("need " << totalObjects);
     while(ros::ok())
     {
         ros::spinOnce();
@@ -156,7 +158,7 @@ int main(int argc, char** argv)
         updateTable();
         updateRouters(&routerPub);
         saveData();
-        if(lastEntry + 1 == totalObjects) 
+        if(lastEntry + 1 == totalObjects)  
 	{
 	
     		if(verbose) echo("Got " << totalObjects << " objects");
@@ -169,7 +171,7 @@ int main(int argc, char** argv)
 		}
 		if(verbose) echo("Service called succesfully");
 		while(ros::ok())
-		{
+	{
 			ros::spinOnce();
 			msg.data = lastEntry;
 			numberPub.publish(msg);
