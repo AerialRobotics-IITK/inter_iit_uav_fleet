@@ -143,8 +143,8 @@ void cfgCallback(inter_iit_uav_fleet::reconfigConfig &config, uint32_t level){
             // case 12: quadToCam(2,2) = config.groups.camera_rotation.r_zz;
             //         ROS_INFO("Set r_zz to %f", quadToCam(2,2)); break;
     
-	case 12: gps_error = config.groups.params.gps_error;
-		ROS_INFO("Set gps_error to %f", gps_error); break;
+	    case 12: gps_error = config.groups.params.gps_error;
+		         ROS_INFO("Set gps_error to %f", gps_error); break;
         case 13: loc_error = config.groups.params.loc_error;
                  ROS_INFO("Set loc_error to %f", loc_error); break;
         case 14: hover_height = config.groups.params.hover_height;

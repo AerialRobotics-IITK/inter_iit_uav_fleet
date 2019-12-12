@@ -157,7 +157,7 @@ namespace state_machine
             if(verbose)   echo("  Received odometry");
 
             mavros_msgs::SetMode mission_set_mode, offb_set_mode;
-            offb_set_mode.request.custom_mode = "OFFBOARD";
+            offb_set_mode.request.custom_mode = "AUTO.RTL";
             mission_set_mode.request.custom_mode = "AUTO.MISSION";
             bool mode_set_= false;
 
@@ -179,33 +179,34 @@ namespace state_machine
             }
             ContMission = false;
 
-            while (mode_set_){
-                ros::spinOnce();
+            // while (mode_set_){
+            //     ros::spinOnce();
 
-                mission_msg.header.stamp = ros::Time::now();
-                mission_msg.pose.position = mav_pose_.pose.pose.position;
+            //     mission_msg.header.stamp = ros::Time::now();
+            //     mission_msg.pose.position = mav_pose_.pose.pose.position;
 		
-		mission_msg.pose.orientation = mav_pose_.pose.pose.orientation;
+		    //     mission_msg.pose.orientation = mav_pose_.pose.pose.orientation;
 		
-		echo("Publishing recursively");
-		for(int i = 0; i < 10; i++)                          {
-                	command_pub_.publish(mission_msg);
-                }
+		    //     echo("Publishing recursively");
+		    //         for(int i = 0; i < 10; i++)                          {
+            //     	command_pub_.publish(mission_msg);
+            //     }
                 
-		while(mav_mode_.mode == "AUTO.MISSION"){
+		        while(mav_mode_.mode == "AUTO.MISSION"){
                     if(set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent){
-
-			 mode_set_ = false;		
-		    	if(verbose) echo("Mode set to Offboard");
-			}
+			            mode_set_ = false;		
+		    	        if(verbose) echo("Returning to Land");
+			        }
                     ros::spinOnce();
+                    loopRate.sleep();
                 }
-                if(verbose)   echo("   Offboard enabled");
-                return_pose_ = mav_pose_;
 
-                loopRate.sleep();
-            }
-            if(verbose)   echo("  Switched to Offboard");
+            //     if(verbose)   echo("   Offboard enabled");
+            //     return_pose_ = mav_pose_;
+
+            //     loopRate.sleep();
+            // }
+            // if(verbose)   echo("  Switched to Offboard");
 
             return;
         }
@@ -242,13 +243,13 @@ namespace state_machine
             mission_msg.pose.position.x = home_pose_.pose.pose.position.x;
             mission_msg.pose.position.y = home_pose_.pose.pose.position.y;
             mission_msg.pose.position.z = hover_height;
-	    mission_msg.pose.orientation = home_pose_.pose.pose.orientation;
+	        mission_msg.pose.orientation = home_pose_.pose.pose.orientation;
 
             if(verbose)   echo("  Home location: x = " << mission_msg.pose.position.x << ", y = " << mission_msg.pose.position.y);
             home_msg_ = mission_msg;
 
             command_pub_.publish(mission_msg);
-	    if(verbose) echo("--published");
+	        if(verbose) echo("--published");
             return;
         }
 
@@ -277,7 +278,8 @@ namespace state_machine
                 mission_msg.pose.position.x = mav_pose_.pose.pose.position.x;
                 mission_msg.pose.position.y = mav_pose_.pose.pose.position.y;
                 mission_msg.pose.position.z = mav_pose_.pose.pose.position.z - descent_step;
-		mission_msg.pose.orientation = mav_pose_.pose.pose.orientation;
+		        mission_msg.pose.orientation = mav_pose_.pose.pose.orientation;
+                
                 command_pub_.publish(mission_msg);
                 LandingDone = (mav_pose_.pose.pose.position.z > land_height) ? false : true;
                 ros::spinOnce();

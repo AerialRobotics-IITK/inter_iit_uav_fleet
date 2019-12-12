@@ -21,6 +21,10 @@ int main(int argc, char **argv)
     ros::Rate transitRate(1.0/transition_time);
     ros::Rate loopRate(10);
     
+    dynamic_reconfigure::Server<inter_iit_uav_fleet::reconfigConfig> cfg_server;
+    dynamic_reconfigure::Server<inter_iit_uav_fleet::reconfigConfig>::CallbackType call_f = boost::bind(&cfgCallback, _1, _2);
+    cfg_server.setCallback(call_f);
+
     state_machine::fsm_ machine;
     machine.start();
     auto state = std::async(std::launch::async, state_machine::statePublish, ph, &machine);
@@ -35,12 +39,14 @@ int main(int argc, char **argv)
         machine.process_event(state_machine::CmdExploring());     
         if(verbose)    state_machine::echo_state(machine);
     }
-    transitRate.sleep();       
-    machine.process_event(state_machine::CmdHover());         
-    if(verbose)    state_machine::echo_state(machine);
-    transitRate.sleep();       
-    machine.process_event(state_machine::CmdGotoLZ());        
-    if(verbose)   state_machine::echo_state(machine);
+
+    // transitRate.sleep();       
+    // machine.process_event(state_machine::CmdHover());         
+    // if(verbose)    state_machine::echo_state(machine);
+
+    // transitRate.sleep();       
+    // machine.process_event(state_machine::CmdGotoLZ());        
+    // if(verbose)   state_machine::echo_state(machine);
 
     transitRate.sleep();       
     machine.process_event(state_machine::CmdHover());         

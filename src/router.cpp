@@ -49,7 +49,7 @@ void updateTable()
                 accept = false; 
                 //if(verbose) echo("Rejected " << objects[j].lat << " " << objects[j].lon);
                	if(verbose) echo("Rejection Error: " << fabs(100000*objects[j].lat -100000* obj_data.object_poses.at(i).position.x) + fabs(100000*objects[j].lon -100000*obj_data.object_poses.at(i).position.y));
-		//if(verbose) echo("Min Error for accept: " << loc_error);
+        		//if(verbose) echo("Min Error for accept: " << loc_error);
 	        break; 
             }
         }
@@ -146,6 +146,10 @@ int main(int argc, char** argv)
 
     ros::ServiceClient terminator = nh.serviceClient<std_srvs::SetBool>("stop");
 
+    dynamic_reconfigure::Server<inter_iit_uav_fleet::reconfigConfig> cfg_server;
+    dynamic_reconfigure::Server<inter_iit_uav_fleet::reconfigConfig>::CallbackType call_f = boost::bind(&cfgCallback, _1, _2);
+    cfg_server.setCallback(call_f);
+
     std_msgs::Int16 msg;
     entries[0] = entries[1] = -1;
     
@@ -159,26 +163,25 @@ int main(int argc, char** argv)
         updateRouters(&routerPub);
         saveData();
         if(lastEntry + 1 == totalObjects)  
-	{
-	
+	    {
     		if(verbose) echo("Got " << totalObjects << " objects");
     		std_srvs::SetBool srv; srv.request.data = false;
-		if(verbose) echo("Calling service stop");
+		    if(verbose) echo("Calling service stop");
     		while(!srv.response.success) 
-		{
-			if(verbose) echo("Waiting for response");
-			terminator.call(srv);
-		}
-		if(verbose) echo("Service called succesfully");
-		while(ros::ok())
-	{
-			ros::spinOnce();
-			msg.data = lastEntry;
-			numberPub.publish(msg);
-			updateRouters(&routerPub);
-			loopRate.sleep();
-		}
-	}
+		    {
+			    if(verbose) echo("Waiting for response");
+			    terminator.call(srv);
+		    }
+            if(verbose) echo("Service called succesfully");
+		    while(ros::ok())
+	        {
+			    ros::spinOnce();
+			    msg.data = lastEntry;
+			    numberPub.publish(msg);
+			    updateRouters(&routerPub);
+			    loopRate.sleep();
+		    }
+	    }
         loopRate.sleep();
     }
 
