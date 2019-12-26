@@ -27,8 +27,9 @@ names:
   A: magnus
   B: spedix
   C: f450
+  G: ground
 
-mav_name: magnus
+mav_name: ground
 
 camera : 
   translation : [0, 0, 0]
