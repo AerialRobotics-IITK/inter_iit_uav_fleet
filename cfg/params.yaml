@@ -9,7 +9,8 @@ hsvMax:
   SMax : 255
   VMax : 255
 
-verbose: true
+is_verbose: true
+debug: false
 loc_error: 0.2
 totalObjects: 4
 gps_error: 30
