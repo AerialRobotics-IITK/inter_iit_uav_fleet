@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
       cv::morphologyEx(thresholded_hsv, thresholded_hsv1, CV_MOP_OPEN,
                        getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3)), cv::Point(-1, -1), 1);
-      cv::findContours(thresholded_hsv, list_contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+      cv::findContours(thresholded_hsv1, list_contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 
       drawing = cv::Mat::zeros(src.size(), CV_8UC3);
       hull.resize(list_contours.size());

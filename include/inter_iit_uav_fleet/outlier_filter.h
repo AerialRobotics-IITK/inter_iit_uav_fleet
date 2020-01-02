@@ -7,7 +7,7 @@ double crossProduct(cv::Point, cv::Point, cv::Point);
 double baseLength(cv::Point, cv::Point);
 double pointToLineDistance(const std::vector<cv::Point>&, int, int);
 
-double crossProduct(cv::Point point, cv::Point line_start, cv::Point line_end)
+double crossProduct(cv::Point point, cv::Point line_start, cv::Point line_end) //Calculates Cross Product for finding the curvature
 {
   return fabs((point.x - line_start.x) * (line_end.y - line_start.y) -
               (point.y - line_start.y) * (line_end.x - line_start.x));
@@ -18,7 +18,7 @@ double baseLength(cv::Point line_end, cv::Point line_start)
   return cv::norm(line_end - line_start);
 }
 
-double pointToLineDistance(const std::vector<cv::Point>& contour, int i, int n)
+double pointToLineDistance(const std::vector<cv::Point>& contour, int i, int n) //Calculating Curvature using the Cross Product
 {
   if (i - n >= 0 && i + n < contour.size())
     return (crossProduct(contour.at(i), contour.at(i - n), contour.at(i + n)) /
@@ -31,8 +31,8 @@ double pointToLineDistance(const std::vector<cv::Point>& contour, int i, int n)
             baseLength(contour.at(i + n - contour.size()), contour.at(i - n)));
 }
 
-void outlier_filter(const std::vector<cv::Point>& contour, const std::vector<int>& hull,
-                    std::vector<cv::Point>& corners)
+void outlier_filter(const std::vector<cv::Point>& contour, const std::vector<int>& hull, //Eliminating multiple detected Hull Points within a given length
+                    std::vector<cv::Point>& corners)                                     //leaving a single point with the highest curvature
 {
   int i, j;
   int size = hull.size();
