@@ -38,17 +38,16 @@ Contains the following components:
 
 * Initialise the workspace, if you haven't already, and clone the repository.
   
-  ```
+   ```bash
       mkdir -p ~/catkin_ws/src
       cd ~/catkin_ws
       catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
       catkin init  # initialize your catkin workspace
       cd ~/catkin_ws/src
-      git clone https://github.com/tanaysaha/inter_iit_uav_fleet
+     git clone https://github.com/tanaysaha/inter_iit_uav_fleet
       wstool init . ./inter_iit_uav_fleet/install/install_https.rosinstall
       wstool update
   ```
-
 Build using either (preferably) `catkin build inter_iit_uav_fleet` or `catkin_make` after ensuring all dependencies are met.
 
 ## 
