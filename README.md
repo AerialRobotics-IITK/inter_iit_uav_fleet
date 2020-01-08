@@ -50,4 +50,7 @@ Contains the following components:
   ```
 Build using either (preferably) `catkin build inter_iit_uav_fleet` or `catkin_make` after ensuring all dependencies are met.
 
-## 
+## Software Architecture
+rqt_graph for three quadrotors with all the components 
+
+![rqt_graph](https://i.imgur.com/w1jv1Mx.png "rqt_graph")
