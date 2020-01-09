@@ -1,6 +1,8 @@
 # inter_iit_uav_fleet
 
-Software stack for the DRDO SASE's UAV Fleet Challenge , a high prep event for the Inter-IIT Techmeet 8.0
+Software stack for the DRDO SASE's UAV Fleet Challenge , a high prep event for the Inter-IIT Techmeet 8.0.
+Detailed information about the software architecture and pipelines can be found in the [wiki](https://github.com/tanaysaha/inter_iit_uav_fleet/wiki).
+
 
 ## Overview
 
