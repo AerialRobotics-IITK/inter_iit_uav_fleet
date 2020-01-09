@@ -34,23 +34,68 @@ Contains the following components:
   - [cv_bridge](https://github.com/ros-perception/vision_opencv) (OpenCV compatibility with ROS)
   - [mavros](https://github.com/mavlink/mavros) 
 
+* [FKIE Multimaster](https://github.com/fkie/multimaster_fkie)
+
+* [Boost C++](https://www.boost.org/)
+
 ## Installation Instructions
 
 * Initialise the workspace, if you haven't already, and clone the repository.
   
-   ```bash
+  ```bash
       mkdir -p ~/catkin_ws/src
       cd ~/catkin_ws
       catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
       catkin init  # initialize your catkin workspace
       cd ~/catkin_ws/src
-     git clone https://github.com/tanaysaha/inter_iit_uav_fleet
+      git clone https://github.com/tanaysaha/inter_iit_uav_fleet   %%%
       wstool init . ./inter_iit_uav_fleet/install/install_https.rosinstall
       wstool update
   ```
+
 Build using either (preferably) `catkin build inter_iit_uav_fleet` or `catkin_make` after ensuring all dependencies are met.
 
 ## Software Architecture
-rqt_graph for three quadrotors with all the components 
 
-![rqt_graph](https://i.imgur.com/w1jv1Mx.png "rqt_graph")
+![rqt_graph](https://i.imgur.com/qLrU68M.jpg "rqt_graph")
+
+## Nodes
+
+* detector: 
+  
+  - Subscribed topics
+    
+    - /image
+    - /GPS
+    - /odom
+  
+  - Published topics
+    
+    - /thresh_image   
+        - (Gives the thresholding/segmented image stream)
+    - /contours     
+        - (Contains the contours of the image stream)
+    - /marked_image   
+        - (Has the image stream with the detected object marked)
+    - /obj_gps    
+        - (The gps of the detected object gets published)
+
+* router:
+  
+  - Subscribed topics
+    
+    - /objects 
+    - /router/data  
+        -  (Subscribes to a table containing information about the boxes)
+    - /router/num  
+        -  (Subscribes to the number of objects detected)
+  
+  - Published topics
+    
+    - /data  
+        - (Publishes a table a containing information about the boxes)
+    
+    - /num  
+        - (Publishes the number of objects detected)
+
+Detailed information about the software architecture and pipelines can be found in the [wiki](https://github.com/tanaysaha/inter_iit_uav_fleet/wiki).
